@@ -151,9 +151,9 @@ FROM
 -- Question 5
 -- not sold in 2003
 SELECT 
-	od.orderNumber,
+	count(od.orderNumber) as numberOfOrders,
 	pd.productName,
-    ord.orderDate
+    max(ord.orderDate) as lastOrderDate
 FROM orderdetails od
 INNER JOIN(
 		SELECT 
@@ -168,12 +168,16 @@ INNER JOIN(
 		FROM orders o) as ord
 	ON od.orderNumber = ord.orderNumber
 WHERE year(ord.orderDate) != '2003'
+GROUP BY pd.productName
+ORDER BY numberOfOrders DESC
 ;
+
+
 -- not sold in 2004
 SELECT 
-	od.orderNumber,
+	count(od.orderNumber) as numberOfOrders,
 	pd.productName,
-    ord.orderDate
+    max(ord.orderDate) as lastOrderDate
 FROM orderdetails od
 INNER JOIN(
 		SELECT 
@@ -188,34 +192,18 @@ INNER JOIN(
 		FROM orders o) as ord
 	ON od.orderNumber = ord.orderNumber
 WHERE year(ord.orderDate) != '2004'
+GROUP BY pd.productName
+ORDER BY numberOfOrders DESC
 ;
+
+
 -- not sold in 2005
 SELECT 
-	od.orderNumber,
+	count(od.orderNumber) as numberOfOrders,
 	pd.productName,
-    ord.orderDate
+    max(ord.orderDate) as lastOrderDate
 FROM orderdetails od
-INNER JOIN(
-		SELECT 
-			p.productCode, 
-            p.productName
-		FROM products p) as pd
-	ON od.productCode = pd.productCode
-INNER JOIN(
-		SELECT
-			o.orderNumber,
-            o.orderDate
-		FROM orders o) as ord
-	ON od.orderNumber = ord.orderNumber
-WHERE year(ord.orderDate) != '2005'
-;
--- not sold in all
-SELECT 
-	od.orderNumber,
-	pd.productName,
-    ord.orderDate
-FROM orderdetails od
-INNER JOIN(
+RIGHT OUTER JOIN(
 		SELECT 
 			p.productCode, 
             p.productName
@@ -227,5 +215,25 @@ LEFT OUTER JOIN(
             o.orderDate
 		FROM orders o) as ord
 	ON od.orderNumber = ord.orderNumber
-WHERE ord.orderDate IS NULL
+WHERE 
+	year(ord.orderDate) != '2005'
+    AND pd.productCode = 'S18_3233'
+GROUP BY pd.productName
+ORDER BY numberOfOrders DESC
+;
+
+
+-- not sold in any Year
+SELECT 
+	od.orderNumber,
+    pd.productCode,
+	pd.productName
+FROM orderdetails od
+RIGHT OUTER JOIN(
+		SELECT 
+			p.productCode, 
+            p.productName
+		FROM products p) as pd
+	ON od.productCode = pd.productCode
+WHERE od.orderNumber is Null
 ;
