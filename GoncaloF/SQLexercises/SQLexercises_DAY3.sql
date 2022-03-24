@@ -22,13 +22,16 @@ order by daysElapsed DESC
 --                              AND oo.customerNumber = o.customerNumber)),0) as daysElapsed
 SELECT
 	o.customerNumber,
-    count(o.orderDate) as numberOfOrders,
+    count(*) as numberOfOrders,
 	CONVERT (AVG(IFNULL(datediff(o.orderDate,(SELECT MAX(oo.orderDate)
 								FROM orders oo
                                 WHERE oo.orderDate < o.orderDate
                                 AND oo.customerNumber = o.customerNumber)),0)), UNSIGNED) as AVGdaysElapsedInt
 																			-- unsigned is for positive and 0 only
 FROM orders o
-GROUP BY o.customerNumber 
+GROUP BY o.customerNumber
 order by numberOfOrders Desc
-;				
+;
+
+
+
