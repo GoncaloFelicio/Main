@@ -1,2 +1,2 @@
-# SQLExercises
-Exercises to practice SQL
+# Exercises
+Exercises to practice SQL and python
