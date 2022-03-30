@@ -1,0 +1,263 @@
+### Overview
+
+For this kata we will be using the DVD Rental database.
+
+You are working for a company that wants to reward its top 10 customers with a free gift. You have been asked to generate a simple report that returns the top 10 customers by total amount spent ordered from highest to lowest. Total number of payments has also been requested.
+
+The query should output the following columns:
+
+customer_id [int4]
+email [varchar]
+payments_count [int]
+total_amount [float]
+and has the following requirements:
+
+only returns the 10 top customers, ordered by total amount spent from highest to lowest
+
+**************
+
+Solution:
+SELECT
+    p.customer_id, 
+    MAX(c.email) as email,
+    COUNT (p.payment_id) as payments_count, 
+    CAST ( SUM(p.amount) as FLOAT) as total_amount
+
+FROM payment as p
+LEFT OUTER JOIN customer as c
+  ON p.customer_id = c.customer_id
+
+GROUP BY p.customer_id
+ORDER BY total_amount DESC
+LIMIT 10
+
+---------------------------------------------
+
+You have access to two tables named top_half and bottom_half, as follows:
+
+top_half schema
+
+id
+heads
+arms
+bottom_half schema
+
+id
+legs
+tails
+You must return a table with the format as follows:
+
+output schema
+
+id
+heads
+legs
+arms
+tails
+species
+The IDs on the tables match to make a full monster. For heads, arms, legs and tails you need to draw in the data from each table.
+
+For the species, if the monster has more heads than arms, more tails than legs, or both, it is a 'BEAST' else it is a 'WEIRDO'. This needs to be captured in the species column.
+
+All rows should be returned (10).
+
+Tests require the use of CASE. Order by species.
+
+******************
+
+Solution:
+
+SELECT
+  th.id,
+  th.heads,
+  bh.legs,
+  th.arms,
+  bh.tails,
+  CASE
+    WHEN th.heads > th.arms THEN 'BEAST'
+    WHEN bh.tails > bh.legs THEN 'BEAST'
+    ELSE 'WEIRDO'
+  END as species
+FROM top_half as th
+INNER JOIN bottom_half as bh
+  on th.id = bh.id
+ORDER BY species
+  
+--------------------------------------------
+
+For this challenge you need to create a UNION statement, there are two tables ussales and eusales the parent company tracks each sale at its respective location in each table, you must all filter the sale price so it only returns rows with a sale greater than 50.00. You have been tasked with combining that data for future analysis. Order by location (US before EU), then by id.
+
+(us/eu)sales table schema
+id
+name
+price
+card_name
+card_number
+transaction_date
+resultant table schema
+location (EU for eusales and US for ussales)
+id
+name
+price (greater than 50.00)
+card_name
+card_number
+transaction_date
+
+****************
+
+Solution:
+
+SELECT
+  'US' as location,
+  us.id,
+  us.name,
+  us.price,
+  us.card_name,
+  us.card_number,
+  us.transaction_date
+FROM ussales as us
+WHERE us.price > 50
+UNION ALL
+SELECT
+  'EU' as location,
+  eu.id,
+  eu.name,
+  eu.price,
+  eu.card_name,
+  eu.card_number,
+  eu.transaction_date
+FROM eusales as eu
+WHERE eu.price > 50
+ORDER by location DESC, id
+
+----------------------------------------------------------------
+
+Given a payment table, which is a part of DVD Rental Sample Database. Produce a result set for the report that shows a side-by-side comparison of the number and total amounts of payments made in Mike's and Jon's stores broken down by months.
+
+The resulting data set should be ordered by month using natural order (Jan, Feb, Mar, etc.).
+
+***********************
+
+Soultion:
+
+SELECT
+  EXTRACT (MONTH FROM p.payment_date) as month,
+  COUNT(p.payment_id) as total_count,
+  SUM(p.amount) as total_amount,
+  COUNT(CASE 
+        WHEN p.staff_id = 1 THEN p.payment_id else NULL END) as mike_count,
+  SUM(CASE 
+      WHEN p.staff_id = 1 THEN p.amount else 0 END) as mike_amount,
+  COUNT(CASE 
+        WHEN p.staff_id = 2 THEN p.payment_id else NULL END)  as jon_count,
+  SUM(CASE
+      WHEN p.staff_id = 2 THEN p.amount else 0 END) as jon_amount
+FROM payment p
+GROUP BY month
+ORDER BY month
+
+----------------------------------------------------------------
+
+Oh no! Timmys been moved into the database divison of his software company but as we know Timmy loves making mistakes. Help Timmy keep his job by fixing his query...
+
+Timmy works for a statistical analysis company and has been given a task of totaling the number of sales on a given day grouped by each department name and then each day.
+
+Resultant table:
+day (type: date) {group by} [order by asc]
+department (type: text) {group by} [In a real world situation it is bad practice to name a column after a table]
+sale_count (type: int)
+
+****************************
+Solution:
+
+SELECT 
+  CAST(s.transaction_date as date ) as day,
+  d.name as department,
+  COUNT(s.id) as sale_count
+  FROM department d
+    JOIN sale s on d.id = s.department_id
+  group by  day, department
+  order by day
+  
+----------------------------------------------------------------
+
+Given a database of first and last IPv4 addresses, calculate the number of addresses between them (including the first one, excluding the last one).
+
+*************************
+
+Solution:
+
+SELECT 
+    id, 
+    last::inet - first::inet as ips_between 
+FROM ip_addresses;
+
+not very interesting, just the :: to change to inet type. which has to do with networks.
+
+----------------------------------------------------------------
+
+Given film_actor and film tables from the DVD Rental sample database find all movies both Sidney Crowe (actor_id = 105) and Salma Nolte (actor_id = 122) cast in together and order the result set alphabetically.
+
+***********************
+
+Solution:
+
+SELECT
+  F.title as title
+FROM (
+  SELECT F1.film_id
+  FROM film_actor F1
+  WHERE F1.actor_id = 105
+  INTERSECT
+  SELECT F2.film_id
+  FROM film_actor F2
+  WHERE F2.actor_id = 122) R, film F
+WHERE R.film_id = F.film_id
+ORDER BY title
+
+---------------------------------------------------------------
+
+Description
+Given a posts table that contains a created_at timestamp column write a query that returns date (without time component), a number of posts for a given date and a running (cumulative) total number of posts up until a given date. The resulting set should be ordered chronologically by date.
+
+***************
+
+Solution:
+
+SELECT 
+  date, 
+  count(date) as count, 
+  CAST(SUM(count(date)) OVER (ORDER BY date) as integer) as total
+
+FROM(SELECT 
+         CAST(created_at as date) as date 
+     FROM posts) as cte
+GROUP BY date;
+
+
+----------------------------------------------------------------
+
+For this challenge you need to create a SELECT statement, this SELECT statement will use an IN to check whether a department has had a sale with a price over 98.00 dollars.
+
+SELECT
+  d.id,
+  d.name
+FROM departments d
+WHERE id IN (SELECT department_id
+            FROM sales
+            WHERE price > 98)
+
+-----------------------------------------------------------------
+
+For this challenge you need to create a simple SELECT statement that will return all columns from the people table, and join to the sales table so that you can return the COUNT of all sales and RANK each person by their sale_count.
+
+SELECT
+  p.id,
+  p.name,
+  COUNT(s.sale) as sale_count,
+  RANK () OVER (ORDER BY COUNT(s.sale) DESC) as sale_rank
+FROM people p
+  INNER JOIN sales s
+  on p.id = s.people_id
+GROUP BY p.id
+;
