@@ -251,6 +251,10 @@ WHERE id IN (SELECT department_id
 
 For this challenge you need to create a simple SELECT statement that will return all columns from the people table, and join to the sales table so that you can return the COUNT of all sales and RANK each person by their sale_count.
 
+*******************************
+
+Solution:
+
 SELECT
   p.id,
   p.name,
@@ -261,3 +265,88 @@ FROM people p
   on p.id = s.people_id
 GROUP BY p.id
 ;
+
+--------------------------------------------------------------------
+
+SQL Basics: Group By Day
+
+There is an events table used to track different key activities taken on a website. For this task you need to:
+
+find the entries whose name equals "trained"
+group them by the day the activity happened (the date part of the created_at timestamp) and their description's
+the 2 aforementioned fields should be returned together with the number of grouped entries in a column called count
+the result should also be sorted by day.
+
+******************
+
+Solution:
+
+SELECT 
+  created_at::date as day,
+  description as description,
+  count(*) as count
+FROM events
+WHERE name = 'trained'
+Group by day, description
+;
+
+--------------------------------------------------------------------
+SQL Basics: Simple PIVOTING data
+
+For this challenge you need to PIVOT data. You have two tables, products and details. Your task is to pivot the rows in products to produce a table of products which have rows of their detail. Group and Order by the name of the Product.
+
+****************
+
+Solution:
+
+CREATE EXTENSION tablefunc;
+
+SELECT *
+FROM  crosstab(
+      'SELECT p.name, detail, COUNT(d.id)
+      FROM products p
+      JOIN details d
+      ON p.id = d.product_id
+      GROUP BY p.name, d.detail
+      ORDER BY 1,2')
+AS ct (name text, bad bigint, good bigint, ok bigint)
+
+----------------------------------------------------------------
+
+SQL Basics: Simple Hierarchical structure
+
+For this challenge you need to create a RECURSIVE Hierarchical query. You have a table employees of employees, you must order each employee by level. You must use a WITH statement and name it employee_levels after that has been defined you must select from it.
+
+A Level is in correlation what manager managers the employee. e.g. an employee with a manager_id of NULL is at level 1 and then direct employees with the employee at level 1 will be level 2.
+
+******************************
+
+Solution:
+
+WITH recursive employee_levels (level, id, first_name, last_name, manager_id)
+AS (
+    SELECT
+      1 as level,
+      id, first_name, last_name, manager_id
+    FROM employees
+    WHERE manager_id is Null
+  
+    UNION all
+    
+    SELECT 
+      level + 1,
+      e2.id, e2.first_name, e2.last_name, e2.manager_id
+    FROM employees e2, employee_levels el
+    WHERE e2.manager_id = el.id
+    )
+
+SELECT 
+    level,
+    id,
+    first_name,
+    last_name,
+    manager_id
+FROM employee_levels
+ORDER BY level 
+
+--------------------------------------------------------------------------------
